@@ -48,6 +48,7 @@ void Connection::connectToRemote()
             this,
             &Connection::initialHandshakeDone);
     m_remainingSeconds = s_defaultTimeout;
+    m_percentComplete = 0;
     emit progressUpdated();
     m_timeoutTimer.start();
     m_serverClientConnect->start();
@@ -69,7 +70,7 @@ Connection::State Connection::state() const
 
 int Connection::percentComplete() const
 {
-    return 15;
+    return m_percentComplete;
 }
 
 QString Connection::currentStep() const
@@ -101,12 +102,15 @@ void Connection::initialHandshakeDone(bool isServer)
     m_serverClientConnect.reset();
     m_isServer = isServer;
     m_step = Step::OpeningSecureChannel;
+    m_percentComplete = 40; // initial handshake reaches 33%
     emit progressUpdated();
 }
 
 void Connection::timeoutTick()
 {
     m_remainingSeconds--;
+    const qreal secondsCompletedPercentAsReal = static_cast<qreal>(s_defaultTimeout - m_remainingSeconds) / s_defaultTimeout;
+    m_percentComplete = qFloor(33.0 * secondsCompletedPercentAsReal); /* 0% to 33% */
     if (m_remainingSeconds > 0) {
         emit progressUpdated();
     } else {

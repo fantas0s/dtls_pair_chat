@@ -59,5 +59,6 @@ private:
     QString m_errorDescription;
     QTimer m_timeoutTimer;
     std::unique_ptr<ServerClientResolver> m_serverClientConnect;
+    int m_percentComplete{0};
 };
 } // namespace dtls_pair_chat
