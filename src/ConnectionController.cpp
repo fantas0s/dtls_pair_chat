@@ -7,7 +7,7 @@ using namespace dtls_pair_chat;
 
 ConnectionController::ConnectionController(QObject *parent)
     : QObject{parent}
-    , m_connection{std::make_shared<Connection>()}
+    , m_connection{std::make_unique<Connection>()}
     , m_hostInfo{std::make_unique<HostInfo>()}
 {
     connect(m_connection.get(),
@@ -35,7 +35,7 @@ ConnectionController::ConnectionController(QObject *parent)
 
 void ConnectionController::abortConnection()
 {
-    m_connection->abortConnection();
+    m_connection->abortConnection(Connection::AbortReason::User);
 }
 
 void ConnectionController::createConnection()

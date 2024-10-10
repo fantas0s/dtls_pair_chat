@@ -44,15 +44,15 @@ UdpMessage::UdpMessage(QByteArrayView receivedMessage)
                         m_type = Type::Chat;
                     } else if (reader.name() == s_xmlId_ackUuid) {
                         if (!reader.atEnd()) {
-                            bool elementFound = reader.readNextStartElement();
-                            while (elementFound) {
+                            bool elementFound{false};
+                            do {
+                                elementFound = reader.readNextStartElement();
                                 if (reader.name() == s_xmlId_senderId) {
                                     m_senderUuid = QUuid::fromString(reader.readElementText());
                                 } else if (reader.name() == s_xmlId_payloadId) {
                                     m_payloadUuid = QUuid::fromString(reader.readElementText());
                                 }
-                                elementFound = reader.readNext();
-                            }
+                            } while (elementFound);
                             if (!m_payloadUuid.isNull() && !m_senderUuid.isNull())
                                 m_type = Type::AckUuid;
                         }

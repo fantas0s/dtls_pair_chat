@@ -26,16 +26,23 @@ Dialog {
                 _dialogRoot.close()
         }
     }
-    ColumnLayout {
+    Item {
         width: parent.width
-        ProgressBar {
-            id: _progressBar
-            Layout.fillWidth: true
-            visible: !_dialogRoot.isErrorDialog
-        }
-        Label {
-            Layout.fillWidth: true
-            text: _dialogRoot.isErrorDialog ? _dialogRoot.errorDescription : _dialogRoot.progressDescription
+        height: _layout.implicitHeight
+        implicitHeight: _layout.implicitHeight
+        ColumnLayout {
+            id: _layout
+            width: parent.width
+            spacing: 12
+            ProgressBar {
+                id: _progressBar
+                Layout.fillWidth: true
+                visible: !_dialogRoot.isErrorDialog
+            }
+            Label {
+                Layout.fillWidth: true
+                text: _dialogRoot.isErrorDialog ? _dialogRoot.errorDescription : _dialogRoot.progressDescription
+            }
         }
     }
 }

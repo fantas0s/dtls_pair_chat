@@ -61,7 +61,7 @@ private slots:
 private:
     bool m_isIp6{false};
     QString m_thisMachineIpAddress;
-    std::shared_ptr<Connection> m_connection;
+    std::unique_ptr<Connection> m_connection;
     std::unique_ptr<HostInfo> m_hostInfo;
 };
 } // namespace dtls_pair_chat

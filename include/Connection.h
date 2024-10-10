@@ -1,7 +1,7 @@
 #pragma once
+#include <Handshake.h>
 #include <UdpReceiver.h>
 #include <UdpSender.h>
-#include <Handshake.h>
 
 #include <QHostAddress>
 #include <QObject>
@@ -13,6 +13,7 @@ class Connection : public QObject
     Q_OBJECT
 public:
     enum class State { Idle, Connecting, Connected, Failed };
+    enum class AbortReason { Timeout, User };
     explicit Connection();
 
     // Setters
@@ -23,7 +24,7 @@ public:
 
     // Control
     void connectToRemote();
-    void abortConnection();
+    void abortConnection(AbortReason reason);
 
     // Status
     bool loginInfoSet() const;
@@ -39,7 +40,7 @@ signals:
     void errorDescriptionChanged();
 
 private slots:
-    void initialHandshakeDone(bool isServer);
+    void initialHandshakeDone();
     void timeoutTick();
 
 private:
@@ -50,7 +51,6 @@ private:
         ExchangingPasswords
     };
     static constexpr int s_defaultTimeout{60};
-    bool m_isServer{false};
     Step m_step{Step::WaitingLoginData};
     State m_state{State::Idle};
     int m_remainingSeconds{s_defaultTimeout};
