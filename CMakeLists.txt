@@ -18,14 +18,18 @@ qt_add_qml_module(appdtls_pair_chat
     SOURCES
         include/Connection.h
         include/ConnectionController.h
+        include/Handshake.h
         include/HostInfo.h
-        include/ServerClientResolver.h
         include/UdpMessage.h
+        include/UdpReceiver.h
+        include/UdpSender.h
         src/Connection.cpp
         src/ConnectionController.cpp
+        src/Handshake.cpp
         src/HostInfo.cpp
-        src/ServerClientResolver.cpp
         src/UdpMessage.cpp
+        src/UdpReceiver.cpp
+        src/UdpSender.cpp
     QML_FILES
         qml/Main.qml
         qml/LoginScreen.qml

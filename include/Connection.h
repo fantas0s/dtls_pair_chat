@@ -1,9 +1,11 @@
 #pragma once
+#include <UdpReceiver.h>
+#include <UdpSender.h>
+#include <Handshake.h>
 
 #include <QHostAddress>
 #include <QObject>
 #include <QTimer>
-#include <ServerClientResolver.h>
 
 namespace dtls_pair_chat {
 class Connection : public QObject
@@ -43,7 +45,7 @@ private slots:
 private:
     enum class Step {
         WaitingLoginData,
-        HostClientRoleResolve,
+        SenderReceiverHandshake,
         OpeningSecureChannel,
         ExchangingPasswords
     };
@@ -58,7 +60,9 @@ private:
     QString m_remotePassword;
     QString m_errorDescription;
     QTimer m_timeoutTimer;
-    std::unique_ptr<ServerClientResolver> m_serverClientConnect;
+    std::unique_ptr<Handshake> m_handshaker;
+    std::shared_ptr<UdpSender> m_sender;
+    std::shared_ptr<UdpReceiver> m_receiver;
     int m_percentComplete{0};
 };
 } // namespace dtls_pair_chat

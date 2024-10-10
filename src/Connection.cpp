@@ -1,7 +1,6 @@
 #include <Connection.h>
 
 #include <QDebug>
-#include <ServerClientResolver.h>
 
 using namespace dtls_pair_chat;
 
@@ -38,20 +37,22 @@ void Connection::remotePassword(QStringView password)
 void Connection::connectToRemote()
 {
     m_state = State::Connecting;
-    m_step = Step::HostClientRoleResolve;
+    m_step = Step::SenderReceiverHandshake;
     emit stateChanged();
     m_errorDescription.clear();
     emit errorDescriptionChanged();
-    m_serverClientConnect = std::make_unique<ServerClientResolver>(m_localIp, m_remoteIp);
-    connect(m_serverClientConnect.get(),
-            &ServerClientResolver::complete,
+    m_sender = std::make_shared<UdpSender>(m_remoteIp);
+    m_receiver = std::make_shared<UdpReceiver>(m_localIp);
+    m_handshaker = std::make_unique<Handshake>(m_sender, m_receiver);
+    connect(m_handshaker.get(),
+            &Handshake::complete,
             this,
             &Connection::initialHandshakeDone);
     m_remainingSeconds = s_defaultTimeout;
     m_percentComplete = 0;
     emit progressUpdated();
     m_timeoutTimer.start();
-    m_serverClientConnect->start();
+    m_handshaker->start();
 }
 
 void Connection::abortConnection() {}
@@ -78,7 +79,7 @@ QString Connection::currentStep() const
     switch (m_step) {
     case Step::WaitingLoginData:
         return tr("Waiting required user input...");
-    case Step::HostClientRoleResolve:
+    case Step::SenderReceiverHandshake:
         return tr("Waiting for other party (%n second(s) until timeout)...", "", m_remainingSeconds);
     case Step::OpeningSecureChannel:
         return tr("Opening secure channel...");
@@ -99,7 +100,7 @@ void Connection::initialHandshakeDone(bool isServer)
 {
     m_timeoutTimer.stop();
     // delete connection object. That will also close connection.
-    m_serverClientConnect.reset();
+    m_handshaker.reset();
     m_isServer = isServer;
     m_step = Step::OpeningSecureChannel;
     m_percentComplete = 40; // initial handshake reaches 33%
@@ -114,12 +115,16 @@ void Connection::timeoutTick()
     if (m_remainingSeconds > 0) {
         emit progressUpdated();
     } else {
-        // delete connection object. That will also close connection.
-        m_serverClientConnect.reset();
+        // delete handshake object. That will also close connection.
+        m_handshaker.reset();
         m_timeoutTimer.stop();
         m_errorDescription = tr("Connection timed out.");
         m_state = State::Failed;
         m_step = Step::WaitingLoginData;
+        // Also remove sender and receiver as we will go back to data entry
+        m_sender.reset();
+        m_receiver.reset();
+        // emit signals about changes
         emit stateChanged();
         emit progressUpdated();
         emit errorDescriptionChanged();

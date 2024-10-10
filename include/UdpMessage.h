@@ -1,16 +1,16 @@
 #pragma once
 
+#include <QByteArrayView>
 #include <QStringView>
 #include <QUuid>
-#include <QByteArrayView>
 
 namespace dtls_pair_chat {
 class UdpMessage
 {
 public:
-    enum class Type { Unknown, SendServerUuid, AckServerUuid, Chat };
-    UdpMessage(const QUuid &uuid, Type type); // Send/Ack ServerUuid constructor
-    UdpMessage(QStringView message);       // Chat constructor
+    enum class Type { Unknown, SendUuid, AckUuid, Chat };
+    UdpMessage(const QUuid &uuidToUse, Type type); // Send/Ack Uuid constructor
+    UdpMessage(QStringView message);          // Chat constructor
     /* received message constructor, will determine the type */
     UdpMessage(QByteArrayView receivedMessage);
 
@@ -18,11 +18,12 @@ public:
     QByteArray toByteArray() const;
 
     /* For reading */
-    QUuid serverId() const;
+    QUuid uuid() const;
     Type type() const;
     QString chatMsg() const;
+
 private:
-    QUuid m_serverId;
+    QUuid m_uuid;
     Type m_type{Type::Unknown};
     QString m_chatMsg;
 };
