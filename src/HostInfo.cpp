@@ -1,16 +1,14 @@
-#include <HostInfo.h>
 #include <QTimerEvent>
+#include <HostInfo.h>
 
 using namespace dtls_pair_chat;
 HostInfo::HostInfo()
+    : QObject{nullptr}
 {
     const auto hostName = QHostInfo::localHostName();
-    if (hostName.isEmpty())
-    {
+    if (hostName.isEmpty()) {
         startTimer(1000, Qt::TimerType::VeryCoarseTimer);
-    }
-    else
-    {
+    } else {
         QHostInfo::lookupHost(hostName, this, &dtls_pair_chat::HostInfo::handleHostInfo);
     }
 }
@@ -33,9 +31,6 @@ void HostInfo::handleHostInfo(const QHostInfo newInfo)
         if (newInfo.addresses().empty()) {
             m_currentError = Error::NoAddress;
         } else {
-            for (const auto &address : newInfo.addresses()) {
-                qDebug() << "Got:" << address.toString();
-            }
             std::optional<QHostAddress> foundAddress;
             for (const auto &address : newInfo.addresses()) {
                 if (!foundAddress.has_value()
@@ -75,8 +70,7 @@ void HostInfo::handleHostInfo(const QHostInfo newInfo)
 void HostInfo::timerEvent(QTimerEvent *event)
 {
     const auto hostName = QHostInfo::localHostName();
-    if (!hostName.isEmpty())
-    {
+    if (!hostName.isEmpty()) {
         killTimer(event->timerId());
         QHostInfo::lookupHost(hostName, this, &dtls_pair_chat::HostInfo::handleHostInfo);
     }
