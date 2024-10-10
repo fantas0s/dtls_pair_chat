@@ -5,20 +5,27 @@
 
 using namespace dtls_pair_chat;
 
-static const auto s_xml_payloadId = QStringLiteral("DTLSCHATPAYLOAD");
-static const auto s_xml_chatMsgId = QStringLiteral("CHATMSG");
-static const auto s_xml_ackServerId = QStringLiteral("ACKUUID");
-static const auto s_xml_sendServerId = QStringLiteral("SENDUUID");
+static const auto s_xmlId_payload = QStringLiteral("DTLSCHATPAYLOAD");
+static const auto s_xmlId_chatMsg = QStringLiteral("CHATMSG");
+static const auto s_xmlId_ackUuid = QStringLiteral("ACKUUID");
+static const auto s_xmlId_senderId = QStringLiteral("SENDERID");
+static const auto s_xmlId_payloadId = QStringLiteral("PAYLOADID");
+static const auto s_xmlId_sendUuid = QStringLiteral("SENDUUID");
 
-UdpMessage::UdpMessage(const QUuid &uuidToUse, Type type)
-    : m_uuid{uuidToUse}
-    , m_type{type}
-{
-    Q_ASSERT(type == Type::SendUuid || type == Type::AckUuid);
-}
+UdpMessage::UdpMessage(const QUuid &uuidToUse)
+    : m_senderUuid{uuidToUse}
+    , m_type{Type::SendUuid}
+{}
+
+UdpMessage::UdpMessage(const QUuid &uuidOfSender, const QUuid &receiverUuid)
+    : m_payloadUuid{receiverUuid}
+    , m_senderUuid{uuidOfSender}
+    , m_type{Type::AckUuid}
+{}
 
 UdpMessage::UdpMessage(QStringView message)
     : m_type{Type::Chat}
+    , m_chatMsg{message.toString()}
 {
     Q_ASSERT(!message.isEmpty());
 }
@@ -30,19 +37,28 @@ UdpMessage::UdpMessage(QByteArrayView receivedMessage)
         reader.readNext();
         if (!reader.atEnd() && reader.isStartDocument()) {
             reader.readNextStartElement();
-            if (!reader.atEnd() && reader.name() == s_xml_payloadId) {
-                reader.readNextStartElement();
-                if (!reader.atEnd()) {
-                    if (reader.name() == s_xml_chatMsgId) {
+            if (!reader.atEnd() && reader.name() == s_xmlId_payload) {
+                if (!reader.atEnd() && reader.readNextStartElement()) {
+                    if (reader.name() == s_xmlId_chatMsg) {
                         m_chatMsg = reader.readElementText();
                         m_type = Type::Chat;
-                    } else if (reader.name() == s_xml_ackServerId) {
-                        m_uuid = QUuid::fromString(reader.readElementText());
-                        if (!m_uuid.isNull())
-                            m_type = Type::AckUuid;
-                    } else if (reader.name() == s_xml_sendServerId) {
-                        m_uuid = QUuid::fromString(reader.readElementText());
-                        if (!m_uuid.isNull())
+                    } else if (reader.name() == s_xmlId_ackUuid) {
+                        if (!reader.atEnd()) {
+                            bool elementFound = reader.readNextStartElement();
+                            while (elementFound) {
+                                if (reader.name() == s_xmlId_senderId) {
+                                    m_senderUuid = QUuid::fromString(reader.readElementText());
+                                } else if (reader.name() == s_xmlId_payloadId) {
+                                    m_payloadUuid = QUuid::fromString(reader.readElementText());
+                                }
+                                elementFound = reader.readNext();
+                            }
+                            if (!m_payloadUuid.isNull() && !m_senderUuid.isNull())
+                                m_type = Type::AckUuid;
+                        }
+                    } else if (reader.name() == s_xmlId_sendUuid) {
+                        m_senderUuid = QUuid::fromString(reader.readElementText());
+                        if (!m_senderUuid.isNull())
                             m_type = Type::SendUuid;
                     }
                 }
@@ -58,16 +74,19 @@ QByteArray UdpMessage::toByteArray() const
         QXmlStreamWriter writer{&returnValue};
         writer.setAutoFormatting(true);
         writer.writeStartDocument();
-        writer.writeStartElement(s_xml_payloadId);
+        writer.writeStartElement(s_xmlId_payload);
         switch (m_type) {
         case Type::Chat:
-            writer.writeTextElement(s_xml_chatMsgId, m_chatMsg);
+            writer.writeTextElement(s_xmlId_chatMsg, m_chatMsg);
             break;
         case Type::AckUuid:
-            writer.writeTextElement(s_xml_ackServerId, m_uuid.toString());
+            writer.writeStartElement(s_xmlId_ackUuid);
+            writer.writeTextElement(s_xmlId_senderId, m_senderUuid.toString());
+            writer.writeTextElement(s_xmlId_payloadId, m_payloadUuid.toString());
+            writer.writeEndElement(); //s_xml_ackUuid
             break;
         case Type::SendUuid:
-            writer.writeTextElement(s_xml_sendServerId, m_uuid.toString());
+            writer.writeTextElement(s_xmlId_sendUuid, m_senderUuid.toString());
             break;
         default:
             break;
@@ -78,9 +97,14 @@ QByteArray UdpMessage::toByteArray() const
     return returnValue;
 }
 
-QUuid UdpMessage::uuid() const
+QUuid UdpMessage::payloadUuid() const
 {
-    return m_uuid;
+    return m_payloadUuid;
+}
+
+QUuid UdpMessage::senderUuid() const
+{
+    return m_senderUuid;
 }
 
 UdpMessage::Type UdpMessage::type() const
