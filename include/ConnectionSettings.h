@@ -5,7 +5,7 @@
 #include <QQmlEngine>
 
 namespace dtls_pair_chat {
-class Connection;
+class ConnectionHandler;
 class HostInfo;
 
 class ConnectionSettings : public QObject
@@ -61,7 +61,7 @@ private slots:
 private:
     bool m_isIp6{false};
     QString m_thisMachineIpAddress;
-    std::unique_ptr<Connection> m_connection;
+    std::unique_ptr<ConnectionHandler> m_connectionHandler;
     std::unique_ptr<HostInfo> m_hostInfo;
 };
 } // namespace dtls_pair_chat

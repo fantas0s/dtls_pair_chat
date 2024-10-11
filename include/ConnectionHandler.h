@@ -8,13 +8,13 @@
 #include <QTimer>
 
 namespace dtls_pair_chat {
-class Connection : public QObject
+class ConnectionHandler : public QObject
 {
     Q_OBJECT
 public:
     enum class State { Idle, Connecting, Connected, Failed };
     enum class AbortReason { Timeout, User, SecureConnectFail };
-    explicit Connection();
+    explicit ConnectionHandler();
 
     // Setters
     void localIpAddress(const QHostAddress &address);

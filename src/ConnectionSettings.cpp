@@ -1,29 +1,29 @@
 #include <ConnectionSettings.h>
 
-#include <Connection.h>
+#include <ConnectionHandler.h>
 #include <HostInfo.h>
 
 using namespace dtls_pair_chat;
 
 ConnectionSettings::ConnectionSettings(QObject *parent)
     : QObject{parent}
-    , m_connection{std::make_unique<Connection>()}
+    , m_connectionHandler{std::make_unique<ConnectionHandler>()}
     , m_hostInfo{std::make_unique<HostInfo>()}
 {
-    connect(m_connection.get(),
-            &Connection::errorDescriptionChanged,
+    connect(m_connectionHandler.get(),
+            &ConnectionHandler::errorDescriptionChanged,
             this,
             &ConnectionSettings::errorStringChanged);
-    connect(m_connection.get(),
-            &Connection::stateChanged,
+    connect(m_connectionHandler.get(),
+            &ConnectionHandler::stateChanged,
             this,
             &ConnectionSettings::connectionStateChanged);
-    connect(m_connection.get(),
-            &Connection::progressUpdated,
+    connect(m_connectionHandler.get(),
+            &ConnectionHandler::progressUpdated,
             this,
             &ConnectionSettings::progressChanged);
-    connect(m_connection.get(),
-            &Connection::remoteIpInvalid,
+    connect(m_connectionHandler.get(),
+            &ConnectionHandler::remoteIpInvalid,
             this,
             &ConnectionSettings::remoteIpInvalid);
     connect(m_hostInfo.get(),
@@ -35,35 +35,35 @@ ConnectionSettings::ConnectionSettings(QObject *parent)
 
 void ConnectionSettings::abortConnection()
 {
-    m_connection->abortConnection(Connection::AbortReason::User);
+    m_connectionHandler->abortConnection(ConnectionHandler::AbortReason::User);
 }
 
 void ConnectionSettings::createConnection()
 {
-    m_connection->connectToRemote();
+    m_connectionHandler->connectToRemote();
 }
 
 void ConnectionSettings::setRemoteIp(const QString &newIp)
 {
-    m_connection->remoteIpAddress(newIp);
+    m_connectionHandler->remoteIpAddress(newIp);
     emit requiredFieldsFilledChanged();
 }
 
 void ConnectionSettings::setRemotePassword(const QString &newPassword)
 {
-    m_connection->remotePassword(newPassword);
+    m_connectionHandler->remotePassword(newPassword);
     emit requiredFieldsFilledChanged();
 }
 
 void ConnectionSettings::setLocalPassword(const QString &newPassword)
 {
-    m_connection->localPassword(newPassword);
+    m_connectionHandler->localPassword(newPassword);
     emit requiredFieldsFilledChanged();
 }
 
 QString ConnectionSettings::errorString() const
 {
-    return m_connection->errorDescription();
+    return m_connectionHandler->errorDescription();
 }
 
 bool ConnectionSettings::isIp6() const
@@ -73,18 +73,18 @@ bool ConnectionSettings::isIp6() const
 
 qreal ConnectionSettings::progress() const
 {
-    const qreal percentAsFloat = m_connection->percentComplete();
+    const qreal percentAsFloat = m_connectionHandler->percentComplete();
     return percentAsFloat / 100.0;
 }
 
 QString ConnectionSettings::progressState() const
 {
-    return m_connection->currentStep();
+    return m_connectionHandler->currentStep();
 }
 
 bool ConnectionSettings::requiredFieldsFilled() const
 {
-    return m_connection->loginInfoSet();
+    return m_connectionHandler->loginInfoSet();
 }
 
 QString ConnectionSettings::thisMachineIpAddress() const
@@ -95,7 +95,7 @@ QString ConnectionSettings::thisMachineIpAddress() const
 void ConnectionSettings::setThisMachineIpAddress(QHostAddress newAddress)
 {
     if (m_hostInfo->currentError().isEmpty()) {
-        m_connection->localIpAddress(newAddress);
+        m_connectionHandler->localIpAddress(newAddress);
         m_isIp6 = newAddress.protocol() == QHostAddress::NetworkLayerProtocol::IPv6Protocol;
         m_thisMachineIpAddress = newAddress.toString();
         emit requiredFieldsFilledChanged();
@@ -109,14 +109,14 @@ void ConnectionSettings::setThisMachineIpAddress(QHostAddress newAddress)
 void ConnectionSettings::connectionStateChanged()
 {
     // this signal is only received when state actually changed, so we can signal every time
-    switch (m_connection->state()) {
-    case Connection::State::Connecting:
+    switch (m_connectionHandler->state()) {
+    case ConnectionHandler::State::Connecting:
         emit connectionStarted();
         break;
-    case Connection::State::Connected:
+    case ConnectionHandler::State::Connected:
         emit connectionSuccessful();
         break;
-    case Connection::State::Failed:
+    case ConnectionHandler::State::Failed:
         emit connectionFailed();
         break;
     default:

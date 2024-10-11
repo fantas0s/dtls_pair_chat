@@ -1,38 +1,38 @@
-#include <Connection.h>
+#include <ConnectionHandler.h>
 
 using namespace dtls_pair_chat;
 
-Connection::Connection()
+ConnectionHandler::ConnectionHandler()
     : QObject{nullptr}
 {
     m_timeoutTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
     m_timeoutTimer.setInterval(std::chrono::seconds{1});
-    connect(&m_timeoutTimer, &QTimer::timeout, this, &Connection::timeoutTick);
+    connect(&m_timeoutTimer, &QTimer::timeout, this, &ConnectionHandler::timeoutTick);
 }
 
-void Connection::localIpAddress(const QHostAddress &address)
+void ConnectionHandler::localIpAddress(const QHostAddress &address)
 {
     m_localIp = address;
 }
 
-void Connection::localPassword(QStringView password)
+void ConnectionHandler::localPassword(QStringView password)
 {
     m_localPassword = password.toString();
 }
 
-void Connection::remoteIpAddress(QStringView address)
+void ConnectionHandler::remoteIpAddress(QStringView address)
 {
     m_remoteIp.setAddress(address.toString());
     if (m_remoteIp.isNull())
         emit remoteIpInvalid();
 }
 
-void Connection::remotePassword(QStringView password)
+void ConnectionHandler::remotePassword(QStringView password)
 {
     m_remotePassword = password.toString();
 }
 
-void Connection::connectToRemote()
+void ConnectionHandler::connectToRemote()
 {
     m_state = State::Connecting;
     m_step = Step::SenderReceiverHandshake;
@@ -41,7 +41,7 @@ void Connection::connectToRemote()
     emit errorDescriptionChanged();
     m_udpConnection = std::make_shared<UdpConnection>(m_localIp, m_remoteIp);
     m_handshaker = std::make_unique<Handshake>(m_udpConnection);
-    connect(m_handshaker.get(), &Handshake::complete, this, &Connection::initialHandshakeDone);
+    connect(m_handshaker.get(), &Handshake::complete, this, &ConnectionHandler::initialHandshakeDone);
     m_remainingSeconds = s_defaultTimeout;
     m_percentComplete = 0;
     emit progressUpdated();
@@ -49,7 +49,7 @@ void Connection::connectToRemote()
     m_handshaker->start();
 }
 
-void Connection::abortConnection(AbortReason reason)
+void ConnectionHandler::abortConnection(AbortReason reason)
 {
     // delete handshake objects.
     m_handshaker.reset();
@@ -85,24 +85,24 @@ void Connection::abortConnection(AbortReason reason)
     emit errorDescriptionChanged();
 }
 
-bool Connection::loginInfoSet() const
+bool ConnectionHandler::loginInfoSet() const
 {
     return !(m_remoteIp.isNull() || m_localIp.isNull() || m_remotePassword.isEmpty()
              || m_localPassword.isEmpty())
            && (m_remotePassword != m_localPassword);
 }
 
-Connection::State Connection::state() const
+ConnectionHandler::State ConnectionHandler::state() const
 {
     return m_state;
 }
 
-int Connection::percentComplete() const
+int ConnectionHandler::percentComplete() const
 {
     return m_percentComplete;
 }
 
-QString Connection::currentStep() const
+QString ConnectionHandler::currentStep() const
 {
     switch (m_step) {
     case Step::WaitingLoginData:
@@ -119,12 +119,12 @@ QString Connection::currentStep() const
     }
 }
 
-QString Connection::errorDescription() const
+QString ConnectionHandler::errorDescription() const
 {
     return m_errorDescription;
 }
 
-void Connection::initialHandshakeDone(QUuid clientUuid, bool isServer)
+void ConnectionHandler::initialHandshakeDone(QUuid clientUuid, bool isServer)
 {
     // delete connection object. That will also close connection.
     m_handshaker.reset();
@@ -137,29 +137,29 @@ void Connection::initialHandshakeDone(QUuid clientUuid, bool isServer)
     connect(m_udpConnection.get(),
             &UdpConnection::secureModeChanged,
             this,
-            &Connection::secureChannelOpened);
+            &ConnectionHandler::secureChannelOpened);
     connect(m_udpConnection.get(),
             &UdpConnection::dtlsError,
             this,
-            &Connection::secureChannelOpenError);
+            &ConnectionHandler::secureChannelOpenError);
     m_udpConnection->switchToSecureConnection(clientUuid, isServer);
 }
 
-void Connection::secureChannelOpenError(QDtlsError error)
+void ConnectionHandler::secureChannelOpenError(QDtlsError error)
 {
     m_secureChannelError = error;
 }
 
-void Connection::secureChannelOpened(bool isSecure)
+void ConnectionHandler::secureChannelOpened(bool isSecure)
 {
     disconnect(m_udpConnection.get(),
                &UdpConnection::secureModeChanged,
                this,
-               &Connection::secureChannelOpened);
+               &ConnectionHandler::secureChannelOpened);
     disconnect(m_udpConnection.get(),
                &UdpConnection::dtlsError,
                this,
-               &Connection::secureChannelOpenError);
+               &ConnectionHandler::secureChannelOpenError);
     if (isSecure) {
         m_step = Step::ExchangingPasswords;
         m_percentComplete = 70; // secure channel handshake reaches 67%, so advance a bit
@@ -171,7 +171,7 @@ void Connection::secureChannelOpened(bool isSecure)
     }
 }
 
-void Connection::timeoutTick()
+void ConnectionHandler::timeoutTick()
 {
     m_remainingSeconds--;
     qreal secondsCompletedPercentAsReal = static_cast<qreal>(s_defaultTimeout - m_remainingSeconds);
@@ -186,7 +186,7 @@ void Connection::timeoutTick()
     }
 }
 
-QString Connection::toString(QDtlsError error)
+QString ConnectionHandler::toString(QDtlsError error)
 {
     switch (error) {
     case QDtlsError::InvalidInputParameters:
