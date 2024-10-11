@@ -21,15 +21,13 @@ qt_add_qml_module(appdtls_pair_chat
         include/Handshake.h
         include/HostInfo.h
         include/UdpMessage.h
-        include/UdpReceiver.h
-        include/UdpSender.h
+        include/UdpConnection.h
         src/Connection.cpp
         src/ConnectionController.cpp
         src/Handshake.cpp
         src/HostInfo.cpp
         src/UdpMessage.cpp
-        src/UdpReceiver.cpp
-        src/UdpSender.cpp
+        src/UdpConnection.cpp
     QML_FILES
         qml/Main.qml
         qml/LoginScreen.qml

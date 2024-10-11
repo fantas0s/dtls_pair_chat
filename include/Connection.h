@@ -1,7 +1,7 @@
 #pragma once
+
 #include <Handshake.h>
-#include <UdpReceiver.h>
-#include <UdpSender.h>
+#include <UdpConnection.h>
 
 #include <QHostAddress>
 #include <QObject>
@@ -13,7 +13,7 @@ class Connection : public QObject
     Q_OBJECT
 public:
     enum class State { Idle, Connecting, Connected, Failed };
-    enum class AbortReason { Timeout, User };
+    enum class AbortReason { Timeout, User, SecureConnectFail };
     explicit Connection();
 
     // Setters
@@ -40,7 +40,9 @@ signals:
     void errorDescriptionChanged();
 
 private slots:
-    void initialHandshakeDone();
+    void initialHandshakeDone(QUuid clientUuid, bool isServer);
+    void secureChannelOpenError(QDtlsError error);
+    void secureChannelOpened(bool isSecure);
     void timeoutTick();
 
 private:
@@ -50,9 +52,11 @@ private:
         OpeningSecureChannel,
         ExchangingPasswords
     };
+    static QString toString(QDtlsError error);
     static constexpr int s_defaultTimeout{60};
     Step m_step{Step::WaitingLoginData};
     State m_state{State::Idle};
+    QDtlsError m_secureChannelError{QDtlsError::NoError};
     int m_remainingSeconds{s_defaultTimeout};
     QHostAddress m_localIp;
     QHostAddress m_remoteIp;
@@ -61,8 +65,7 @@ private:
     QString m_errorDescription;
     QTimer m_timeoutTimer;
     std::unique_ptr<Handshake> m_handshaker;
-    std::shared_ptr<UdpSender> m_sender;
-    std::shared_ptr<UdpReceiver> m_receiver;
+    std::shared_ptr<UdpConnection> m_udpConnection;
     int m_percentComplete{0};
 };
 } // namespace dtls_pair_chat
