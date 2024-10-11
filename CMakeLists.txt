@@ -17,13 +17,13 @@ qt_add_qml_module(appdtls_pair_chat
     VERSION 1.0
     SOURCES
         include/Connection.h
-        include/ConnectionController.h
+        include/ConnectionSettings.h
         include/Handshake.h
         include/HostInfo.h
         include/UdpMessage.h
         include/UdpConnection.h
         src/Connection.cpp
-        src/ConnectionController.cpp
+        src/ConnectionSettings.cpp
         src/Handshake.cpp
         src/HostInfo.cpp
         src/UdpMessage.cpp

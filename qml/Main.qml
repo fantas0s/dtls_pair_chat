@@ -19,21 +19,21 @@ Window {
         running: true
         DSM.State {
             id: _stateLogin
-            onEntered: DTLSPC.ConnectionController.abortConnection()
+            onEntered: DTLSPC.ConnectionSettings.abortConnection()
             DSM.SignalTransition {
                 targetState: _stateConnectingDialog
-                signal: DTLSPC.ConnectionController.connectionStarted
+                signal: DTLSPC.ConnectionSettings.connectionStarted
             }
         }
         DSM.State {
             id: _stateConnectingDialog
             DSM.SignalTransition {
                 targetState: _stateChat
-                signal: DTLSPC.ConnectionController.connectionSuccessful
+                signal: DTLSPC.ConnectionSettings.connectionSuccessful
             }
             DSM.SignalTransition {
                 targetState: _stateFailDialog
-                signal: DTLSPC.ConnectionController.connectionFailed
+                signal: DTLSPC.ConnectionSettings.connectionFailed
             }
             DSM.SignalTransition {
                 targetState: _stateLogin
@@ -73,8 +73,8 @@ Window {
         y: (parent.height / 2) - (_connectFailDialog.height / 2)
         visibleCondition: _stateConnectingDialog.active || _stateFailDialog.active
         isErrorDialog: _stateFailDialog.active
-        progress: DTLSPC.ConnectionController.progress
-        progressDescription: DTLSPC.ConnectionController.progressState
-        errorDescription: DTLSPC.ConnectionController.errorString
+        progress: DTLSPC.ConnectionSettings.progress
+        progressDescription: DTLSPC.ConnectionSettings.progressState
+        errorDescription: DTLSPC.ConnectionSettings.errorString
     }
 }

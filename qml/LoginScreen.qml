@@ -10,11 +10,11 @@ Pane {
         columns: 2
         rowSpacing: 16
         Label {
-            text: DTLSPC.ConnectionController.isIp6 ? qsTr("Your IP (v6) address:") : qsTr("Your IP address")
+            text: DTLSPC.ConnectionSettings.isIp6 ? qsTr("Your IP (v6) address:") : qsTr("Your IP address")
         }
         TextField {
             enabled: false
-            text: DTLSPC.ConnectionController.thisMachineIpAddress
+            text: DTLSPC.ConnectionSettings.thisMachineIpAddress
             Layout.preferredWidth: 320
         }
 
@@ -26,10 +26,10 @@ Pane {
             placeholderText: qsTr("e.g. 2001:0db8:85a3:0000:0000:8a2e:0370:7334 or 127.0.0.1")
             Layout.preferredWidth: 320
             errorString: qsTr("Remote IP was not valid")
-            onEditingFinished: DTLSPC.ConnectionController.setRemoteIp(text)
+            onEditingFinished: DTLSPC.ConnectionSettings.setRemoteIp(text)
             onTextChanged: errorCriteria = false
             Connections {
-                target: DTLSPC.ConnectionController
+                target: DTLSPC.ConnectionSettings
                 function onRemoteIpInvalid() {
                     _remoteIpTextField.errorCriteria = true
                 }
@@ -43,7 +43,7 @@ Pane {
             placeholderText: qsTr("Enter here the password your friend gave to you")
             Layout.preferredWidth: 320
             onEditingFinished: _localPasswordTextField.compareString = text
-            onTextChanged: DTLSPC.ConnectionController.setRemotePassword(text)
+            onTextChanged: DTLSPC.ConnectionSettings.setRemotePassword(text)
         }
 
         Label {
@@ -56,13 +56,13 @@ Pane {
             Layout.preferredWidth: 320
             errorCriteria: text.length > 0 && text === compareString
             errorString: qsTr("Passwords cannot be the same!")
-            onTextChanged: DTLSPC.ConnectionController.setLocalPassword(text)
+            onTextChanged: DTLSPC.ConnectionSettings.setLocalPassword(text)
         }
 
         Button {
             text: qsTr("Connect")
-            enabled: DTLSPC.ConnectionController.requiredFieldsFilled
-            onClicked: DTLSPC.ConnectionController.createConnection()
+            enabled: DTLSPC.ConnectionSettings.requiredFieldsFilled
+            onClicked: DTLSPC.ConnectionSettings.createConnection()
         }
     }
 }

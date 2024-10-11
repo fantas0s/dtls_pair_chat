@@ -1,11 +1,11 @@
-#include <ConnectionController.h>
+#include <ConnectionSettings.h>
 
 #include <Connection.h>
 #include <HostInfo.h>
 
 using namespace dtls_pair_chat;
 
-ConnectionController::ConnectionController(QObject *parent)
+ConnectionSettings::ConnectionSettings(QObject *parent)
     : QObject{parent}
     , m_connection{std::make_unique<Connection>()}
     , m_hostInfo{std::make_unique<HostInfo>()}
@@ -13,86 +13,86 @@ ConnectionController::ConnectionController(QObject *parent)
     connect(m_connection.get(),
             &Connection::errorDescriptionChanged,
             this,
-            &ConnectionController::errorStringChanged);
+            &ConnectionSettings::errorStringChanged);
     connect(m_connection.get(),
             &Connection::stateChanged,
             this,
-            &ConnectionController::connectionStateChanged);
+            &ConnectionSettings::connectionStateChanged);
     connect(m_connection.get(),
             &Connection::progressUpdated,
             this,
-            &ConnectionController::progressChanged);
+            &ConnectionSettings::progressChanged);
     connect(m_connection.get(),
             &Connection::remoteIpInvalid,
             this,
-            &ConnectionController::remoteIpInvalid);
+            &ConnectionSettings::remoteIpInvalid);
     connect(m_hostInfo.get(),
             &HostInfo::addressChanged,
             this,
-            &ConnectionController::setThisMachineIpAddress);
+            &ConnectionSettings::setThisMachineIpAddress);
     setThisMachineIpAddress(m_hostInfo->currentAddress());
 }
 
-void ConnectionController::abortConnection()
+void ConnectionSettings::abortConnection()
 {
     m_connection->abortConnection(Connection::AbortReason::User);
 }
 
-void ConnectionController::createConnection()
+void ConnectionSettings::createConnection()
 {
     m_connection->connectToRemote();
 }
 
-void ConnectionController::setRemoteIp(const QString &newIp)
+void ConnectionSettings::setRemoteIp(const QString &newIp)
 {
     m_connection->remoteIpAddress(newIp);
     emit requiredFieldsFilledChanged();
 }
 
-void ConnectionController::setRemotePassword(const QString &newPassword)
+void ConnectionSettings::setRemotePassword(const QString &newPassword)
 {
     m_connection->remotePassword(newPassword);
     emit requiredFieldsFilledChanged();
 }
 
-void ConnectionController::setLocalPassword(const QString &newPassword)
+void ConnectionSettings::setLocalPassword(const QString &newPassword)
 {
     m_connection->localPassword(newPassword);
     emit requiredFieldsFilledChanged();
 }
 
-QString ConnectionController::errorString() const
+QString ConnectionSettings::errorString() const
 {
     return m_connection->errorDescription();
 }
 
-bool ConnectionController::isIp6() const
+bool ConnectionSettings::isIp6() const
 {
     return m_isIp6;
 }
 
-qreal ConnectionController::progress() const
+qreal ConnectionSettings::progress() const
 {
     const qreal percentAsFloat = m_connection->percentComplete();
     return percentAsFloat / 100.0;
 }
 
-QString ConnectionController::progressState() const
+QString ConnectionSettings::progressState() const
 {
     return m_connection->currentStep();
 }
 
-bool ConnectionController::requiredFieldsFilled() const
+bool ConnectionSettings::requiredFieldsFilled() const
 {
     return m_connection->loginInfoSet();
 }
 
-QString ConnectionController::thisMachineIpAddress() const
+QString ConnectionSettings::thisMachineIpAddress() const
 {
     return m_thisMachineIpAddress;
 }
 
-void ConnectionController::setThisMachineIpAddress(QHostAddress newAddress)
+void ConnectionSettings::setThisMachineIpAddress(QHostAddress newAddress)
 {
     if (m_hostInfo->currentError().isEmpty()) {
         m_connection->localIpAddress(newAddress);
@@ -106,7 +106,7 @@ void ConnectionController::setThisMachineIpAddress(QHostAddress newAddress)
     emit ipAddressChanged();
 }
 
-void ConnectionController::connectionStateChanged()
+void ConnectionSettings::connectionStateChanged()
 {
     // this signal is only received when state actually changed, so we can signal every time
     switch (m_connection->state()) {

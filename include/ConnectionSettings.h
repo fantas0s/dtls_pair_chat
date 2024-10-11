@@ -8,7 +8,7 @@ namespace dtls_pair_chat {
 class Connection;
 class HostInfo;
 
-class ConnectionController : public QObject
+class ConnectionSettings : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
@@ -21,7 +21,7 @@ class ConnectionController : public QObject
     Q_PROPERTY(QString thisMachineIpAddress READ thisMachineIpAddress NOTIFY ipAddressChanged FINAL)
 
 public:
-    explicit ConnectionController(QObject *parent = nullptr);
+    explicit ConnectionSettings(QObject *parent = nullptr);
     // Control
     Q_INVOKABLE void abortConnection();
     Q_INVOKABLE void createConnection();
