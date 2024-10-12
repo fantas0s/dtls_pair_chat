@@ -33,10 +33,12 @@ qt_add_qml_module(appdtls_pair_chat
         src/UdpMessage.cpp
         src/UdpConnection.cpp
     QML_FILES
-        qml/Main.qml
-        qml/LoginScreen.qml
-        qml/TextFieldWithErrorLabel.qml
+        qml/ChatListDelegate.qml
+        qml/ChatScreen.qml
         qml/ConnectionDialog.qml
+        qml/LoginScreen.qml
+        qml/Main.qml
+        qml/TextFieldWithErrorLabel.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

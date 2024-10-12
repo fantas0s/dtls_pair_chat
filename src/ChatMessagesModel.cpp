@@ -23,7 +23,7 @@ QVariant ChatMessagesModel::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray> ChatMessagesModel::roleNames() const
 {
     QHash<int, QByteArray> returnValue;
-    returnValue.insert(static_cast<int>(Role::MsgText), "msgtext");
+    returnValue.insert(static_cast<int>(Role::MsgText), "msgText");
     return returnValue;
 }
 
@@ -48,17 +48,29 @@ void ChatMessagesModel::setUdpConnection(std::shared_ptr<UdpConnection> udpConne
 
 void ChatMessagesModel::sendMessage(const QString &message)
 {
-    beginInsertRows(QModelIndex{}, 0, 0);
-    m_messages.prepend(tr("<b>You:</b> %1").arg(message));
-    endInsertRows();
+    insertNewMessage(message, Direction::Outgoing);
     m_udpConnection->sendMessageToRemote(UdpMessage{message});
 }
 
 void ChatMessagesModel::messageReceived(const UdpMessage &message)
 {
     if (message.type() == UdpMessage::Type::Chat) {
-        beginInsertRows(QModelIndex{}, 0, 0);
-        m_messages.prepend(tr("<b>They:</b> %1").arg(message.chatMsg()));
-        endInsertRows();
+        insertNewMessage(message.chatMsg(), Direction::Incoming);
     }
+}
+
+void ChatMessagesModel::insertNewMessage(QStringView message, Direction direction)
+{
+    /* We use HTML formatting so escape all HTML tags. */
+    QString formattedMessage{message.toString().toHtmlEscaped()};
+    /* replace line breaks with their counterparts. */
+    formattedMessage.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
+    /* Add prefix. */
+    if (direction == Direction::Incoming)
+        formattedMessage.prepend(tr("<b>They:</b> "));
+    else
+        formattedMessage.prepend(tr("<b>You:</b> "));
+    beginInsertRows(QModelIndex{}, 0, 0);
+    m_messages.prepend(formattedMessage);
+    endInsertRows();
 }

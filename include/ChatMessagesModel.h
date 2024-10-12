@@ -24,6 +24,8 @@ private slots:
 
 private:
     enum class Role { MsgText = Qt::ItemDataRole::UserRole };
+    enum class Direction { Incoming, Outgoing };
+    void insertNewMessage(QStringView message, Direction direction);
     QStringList m_messages;
     std::shared_ptr<UdpConnection> m_udpConnection;
 };
