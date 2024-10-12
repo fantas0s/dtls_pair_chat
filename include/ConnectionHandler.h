@@ -33,6 +33,7 @@ public:
     int percentComplete() const;
     QString currentStep() const;
     QString errorDescription() const;
+    std::shared_ptr<UdpConnection> udpConnection() const;
 
 signals:
     void stateChanged();

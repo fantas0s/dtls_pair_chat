@@ -16,6 +16,7 @@ qt_add_qml_module(appdtls_pair_chat
     URI dtls_pair_chat
     VERSION 1.0
     SOURCES
+        include/ChatMessagesModel.h
         include/ConnectionHandler.h
         include/ConnectionSettings.h
         include/Handshake.h
@@ -23,6 +24,7 @@ qt_add_qml_module(appdtls_pair_chat
         include/PasswordVerifier.h
         include/UdpMessage.h
         include/UdpConnection.h
+        src/ChatMessagesModel.cpp
         src/ConnectionHandler.cpp
         src/ConnectionSettings.cpp
         src/Handshake.cpp

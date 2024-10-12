@@ -3,10 +3,12 @@
 #include <QHostAddress>
 #include <QObject>
 #include <QQmlEngine>
+#include <QAbstractItemModel>
 
 namespace dtls_pair_chat {
 class ConnectionHandler;
 class HostInfo;
+class ChatMessagesModel;
 
 class ConnectionSettings : public QObject
 {
@@ -19,6 +21,7 @@ class ConnectionSettings : public QObject
     Q_PROPERTY(QString progressState READ progressState NOTIFY progressChanged FINAL)
     Q_PROPERTY(bool requiredFieldsFilled READ requiredFieldsFilled NOTIFY requiredFieldsFilledChanged FINAL)
     Q_PROPERTY(QString thisMachineIpAddress READ thisMachineIpAddress NOTIFY ipAddressChanged FINAL)
+    Q_PROPERTY(QAbstractItemModel* chatModel READ chatModel NOTIFY chatModelChanged FINAL)
 
 public:
     explicit ConnectionSettings(QObject *parent = nullptr);
@@ -38,6 +41,7 @@ public:
     QString progressState() const;
     bool requiredFieldsFilled() const;
     QString thisMachineIpAddress() const;
+    QAbstractItemModel* chatModel() const;
 
 signals:
     // property signals
@@ -45,6 +49,7 @@ signals:
     void ipAddressChanged();
     void progressChanged();
     void requiredFieldsFilledChanged();
+    void chatModelChanged();
 
     // connection status
     void connectionStarted();
@@ -61,6 +66,7 @@ private slots:
 private:
     bool m_isIp6{false};
     QString m_thisMachineIpAddress;
+    std::unique_ptr<ChatMessagesModel> m_chatModel;
     std::unique_ptr<ConnectionHandler> m_connectionHandler;
     std::unique_ptr<HostInfo> m_hostInfo;
 };

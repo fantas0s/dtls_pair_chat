@@ -1,5 +1,6 @@
 #include <ConnectionSettings.h>
 
+#include <ChatMessagesModel.h>
 #include <ConnectionHandler.h>
 #include <HostInfo.h>
 
@@ -7,6 +8,7 @@ using namespace dtls_pair_chat;
 
 ConnectionSettings::ConnectionSettings(QObject *parent)
     : QObject{parent}
+    , m_chatModel{std::make_unique<ChatMessagesModel>()}
     , m_connectionHandler{std::make_unique<ConnectionHandler>()}
     , m_hostInfo{std::make_unique<HostInfo>()}
 {
@@ -92,6 +94,11 @@ QString ConnectionSettings::thisMachineIpAddress() const
     return m_thisMachineIpAddress;
 }
 
+QAbstractItemModel *ConnectionSettings::chatModel() const
+{
+    return m_chatModel.get();
+}
+
 void ConnectionSettings::setThisMachineIpAddress(QHostAddress newAddress)
 {
     if (m_hostInfo->currentError().isEmpty()) {
@@ -114,12 +121,14 @@ void ConnectionSettings::connectionStateChanged()
         emit connectionStarted();
         break;
     case ConnectionHandler::State::Connected:
+        m_chatModel->setUdpConnection(m_connectionHandler->udpConnection());
         emit connectionSuccessful();
         break;
     case ConnectionHandler::State::Failed:
         emit connectionFailed();
         break;
     default:
+        m_chatModel->setUdpConnection({});
         // no signal when changing to idle
         break;
     }

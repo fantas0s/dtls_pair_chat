@@ -132,6 +132,11 @@ QString ConnectionHandler::errorDescription() const
     return m_errorDescription;
 }
 
+std::shared_ptr<UdpConnection> ConnectionHandler::udpConnection() const
+{
+    return m_udpConnection;
+}
+
 void ConnectionHandler::initialHandshakeDone(QUuid clientUuid, bool isServer)
 {
     // delete connection object. That will also close connection.
