@@ -9,13 +9,14 @@ class UdpMessage
 {
 public:
     enum class Type { Unknown, SendUuid, AckUuid, SendPassword, AckPassword, Chat };
-    UdpMessage(const QUuid &uuidToUse);                               // Send Uuid constructor
-    UdpMessage(const QUuid &uuidOfSender, const QUuid &receiverUuid); // Ack Uuid constructor
-    UdpMessage(bool passwordWasCorrect);                              // Ack Password constructor
-    UdpMessage(QStringView payload, Type messageType = Type::Chat);   // Chat / SendPassword message constructor
+    enum class PasswordState { Accepted, Rejected };
+    explicit UdpMessage(const QUuid &uuidToUse);                               // Send Uuid constructor
+    explicit UdpMessage(const QUuid &uuidOfSender, const QUuid &receiverUuid); // Ack Uuid constructor
+    explicit UdpMessage(PasswordState state);                                  // Ack Password constructor
+    explicit UdpMessage(QStringView payload, Type messageType = Type::Chat);   // Chat / SendPassword message constructor
 
     /* received message constructor, will determine the type from byte array content */
-    UdpMessage(QByteArrayView receivedMessage);
+    explicit UdpMessage(QByteArrayView receivedMessage);
 
     /* For sending */
     QByteArray toByteArray() const;

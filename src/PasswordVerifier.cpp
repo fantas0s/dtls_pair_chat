@@ -38,7 +38,10 @@ void PasswordVerifier::messageReceived(const UdpMessage &receivedMessage)
         m_received.setFlag(ReceivedMessage::Password);
         m_passwordsMatch = m_passwordsMatch && passwordAccepted;
         // Send ack
-        m_udpConnection->sendMessageToRemote(UdpMessage{passwordAccepted});
+        if (passwordAccepted)
+            m_udpConnection->sendMessageToRemote(UdpMessage{UdpMessage::PasswordState::Accepted});
+        else
+            m_udpConnection->sendMessageToRemote(UdpMessage{UdpMessage::PasswordState::Rejected});
         tryFinalize();
     } break;
     case UdpMessage::Type::AckPassword:

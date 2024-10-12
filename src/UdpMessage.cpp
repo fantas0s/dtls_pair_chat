@@ -28,9 +28,9 @@ UdpMessage::UdpMessage(const QUuid &uuidOfSender, const QUuid &receiverUuid)
     , m_type{Type::AckUuid}
 {}
 
-UdpMessage::UdpMessage(bool passwordWasCorrect)
-    : m_type{Type::AckUuid}
-    , m_accepted{passwordWasCorrect}
+UdpMessage::UdpMessage(PasswordState state)
+    : m_type{Type::AckPassword}
+    , m_accepted{state == PasswordState::Accepted}
 {}
 
 UdpMessage::UdpMessage(QStringView payload, Type messageType)
