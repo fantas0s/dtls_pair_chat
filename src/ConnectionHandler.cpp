@@ -215,6 +215,8 @@ void ConnectionHandler::timeoutTick()
     m_percentComplete = qFloor(33.0 * secondsCompletedPercentAsReal); /* 0% to 33% */
     if (m_step == Step::OpeningSecureChannel)
         m_percentComplete += 34; /* 34% to 67% */
+    else if (m_step == Step::ExchangingPasswords)
+        m_percentComplete += 67; /* 67% to 100% */
     if (m_remainingSeconds > 0) {
         emit progressUpdated();
     } else {
