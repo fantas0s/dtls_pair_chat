@@ -5,12 +5,17 @@
 
 using namespace dtls_pair_chat;
 
+// XML Elements
 static const auto s_xmlId_payload = QStringLiteral("DTLSCHATPAYLOAD");
 static const auto s_xmlId_chatMsg = QStringLiteral("CHATMSG");
 static const auto s_xmlId_ackUuid = QStringLiteral("ACKUUID");
 static const auto s_xmlId_senderId = QStringLiteral("SENDERID");
 static const auto s_xmlId_payloadId = QStringLiteral("PAYLOADID");
 static const auto s_xmlId_sendUuid = QStringLiteral("SENDUUID");
+static const auto s_xmlId_ackPassword = QStringLiteral("ACKPASSWORD");
+static const auto s_xmlId_sendPassword = QStringLiteral("SENDPASSWORD");
+// XML Attributes
+static const auto s_xmlAttrId_accepted = QStringLiteral("accepted");
 
 UdpMessage::UdpMessage(const QUuid &uuidToUse)
     : m_senderUuid{uuidToUse}
@@ -23,11 +28,17 @@ UdpMessage::UdpMessage(const QUuid &uuidOfSender, const QUuid &receiverUuid)
     , m_type{Type::AckUuid}
 {}
 
-UdpMessage::UdpMessage(QStringView message)
-    : m_type{Type::Chat}
-    , m_chatMsg{message.toString()}
+UdpMessage::UdpMessage(bool passwordWasCorrect)
+    : m_type{Type::AckUuid}
+    , m_accepted{passwordWasCorrect}
+{}
+
+UdpMessage::UdpMessage(QStringView payload, Type messageType)
+    : m_type{messageType}
+    , m_chatMsg{payload.toString()}
 {
-    Q_ASSERT(!message.isEmpty());
+    Q_ASSERT(!payload.isEmpty());
+    Q_ASSERT(messageType == Type::Chat || messageType == Type::SendPassword);
 }
 
 UdpMessage::UdpMessage(QByteArrayView receivedMessage)
@@ -42,6 +53,13 @@ UdpMessage::UdpMessage(QByteArrayView receivedMessage)
                     if (reader.name() == s_xmlId_chatMsg) {
                         m_chatMsg = reader.readElementText();
                         m_type = Type::Chat;
+                    } else if (reader.name() == s_xmlId_sendPassword) {
+                        m_chatMsg = reader.readElementText();
+                        m_type = Type::SendPassword;
+                    } else if (reader.name() == s_xmlId_ackPassword) {
+                        m_accepted = reader.attributes().value(s_xmlAttrId_accepted)
+                                     == QStringLiteral("true");
+                        m_type = Type::SendPassword;
                     } else if (reader.name() == s_xmlId_ackUuid) {
                         if (!reader.atEnd()) {
                             bool elementFound{false};
@@ -88,6 +106,16 @@ QByteArray UdpMessage::toByteArray() const
         case Type::SendUuid:
             writer.writeTextElement(s_xmlId_sendUuid, m_senderUuid.toString());
             break;
+        case Type::SendPassword:
+            writer.writeTextElement(s_xmlId_sendPassword, m_chatMsg);
+            break;
+        case Type::AckPassword:
+            writer.writeEmptyElement(s_xmlId_ackPassword);
+            if (m_accepted)
+                writer.writeAttribute(s_xmlAttrId_accepted, QStringLiteral("true"));
+            else
+                writer.writeAttribute(s_xmlAttrId_accepted, QStringLiteral("false"));
+            break;
         default:
             break;
         }
@@ -115,4 +143,9 @@ UdpMessage::Type UdpMessage::type() const
 QString UdpMessage::chatMsg() const
 {
     return m_chatMsg;
+}
+
+bool UdpMessage::accepted() const
+{
+    return m_accepted;
 }

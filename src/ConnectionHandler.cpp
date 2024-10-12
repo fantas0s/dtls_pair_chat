@@ -41,7 +41,10 @@ void ConnectionHandler::connectToRemote()
     emit errorDescriptionChanged();
     m_udpConnection = std::make_shared<UdpConnection>(m_localIp, m_remoteIp);
     m_handshaker = std::make_unique<Handshake>(m_udpConnection);
-    connect(m_handshaker.get(), &Handshake::complete, this, &ConnectionHandler::initialHandshakeDone);
+    connect(m_handshaker.get(),
+            &Handshake::complete,
+            this,
+            &ConnectionHandler::initialHandshakeDone);
     m_remainingSeconds = s_defaultTimeout;
     m_percentComplete = 0;
     emit progressUpdated();
@@ -53,6 +56,7 @@ void ConnectionHandler::abortConnection(AbortReason reason)
 {
     // delete handshake objects.
     m_handshaker.reset();
+    m_passwordVerifier.reset();
     m_timeoutTimer.stop();
     switch (reason) {
     case AbortReason::Timeout:
@@ -68,6 +72,10 @@ void ConnectionHandler::abortConnection(AbortReason reason)
         else
             m_errorDescription = tr("Secure connection setup failed (%1).")
                                      .arg(toString(m_secureChannelError));
+        m_state = State::Failed;
+        break;
+    case AbortReason::PasswordMismatch:
+        m_errorDescription = tr("Password did not match in this or remote end.");
         m_state = State::Failed;
         break;
     default: // AbortReason::User
@@ -133,7 +141,13 @@ void ConnectionHandler::initialHandshakeDone(QUuid clientUuid, bool isServer)
     m_remainingSeconds = s_defaultTimeout;
     emit progressUpdated();
 
-    // Switch to secure connection
+    /* Create password verifier already as password from remote could be
+     * sent immediately after secure mode is enabled.
+     * Then switch to secure connection.
+     */
+    m_passwordVerifier = std::make_unique<PasswordVerifier>(m_udpConnection,
+                                                            m_localPassword,
+                                                            m_remotePassword);
     connect(m_udpConnection.get(),
             &UdpConnection::secureModeChanged,
             this,
@@ -162,12 +176,34 @@ void ConnectionHandler::secureChannelOpened(bool isSecure)
                &ConnectionHandler::secureChannelOpenError);
     if (isSecure) {
         m_step = Step::ExchangingPasswords;
-        m_percentComplete = 70; // secure channel handshake reaches 67%, so advance a bit
+        m_percentComplete = 67; // secure channel handshake reaches 67%
         m_remainingSeconds = s_defaultTimeout;
-        // TODO: passwordexchange object - sends and receives a password and verifies they match
+        connect(m_passwordVerifier.get(),
+                &PasswordVerifier::complete,
+                this,
+                &ConnectionHandler::passwordVerificationDone);
+        m_passwordVerifier->start();
         emit progressUpdated();
     } else {
         abortConnection(AbortReason::SecureConnectFail);
+    }
+}
+
+void ConnectionHandler::passwordVerificationDone(bool success)
+{
+    disconnect(m_passwordVerifier.get(),
+               &PasswordVerifier::complete,
+               this,
+               &ConnectionHandler::passwordVerificationDone);
+    if (success) {
+        // All done, connected.
+        m_passwordVerifier.reset();
+        m_percentComplete = 100;
+        m_state = State::Connected;
+        emit progressUpdated();
+        emit stateChanged();
+    } else {
+        abortConnection(AbortReason::PasswordMismatch);
     }
 }
 

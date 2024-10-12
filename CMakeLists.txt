@@ -20,12 +20,14 @@ qt_add_qml_module(appdtls_pair_chat
         include/ConnectionSettings.h
         include/Handshake.h
         include/HostInfo.h
+        include/PasswordVerifier.h
         include/UdpMessage.h
         include/UdpConnection.h
         src/ConnectionHandler.cpp
         src/ConnectionSettings.cpp
         src/Handshake.cpp
         src/HostInfo.cpp
+        src/PasswordVerifier.cpp
         src/UdpMessage.cpp
         src/UdpConnection.cpp
     QML_FILES

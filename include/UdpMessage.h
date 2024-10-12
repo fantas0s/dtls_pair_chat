@@ -8,10 +8,11 @@ namespace dtls_pair_chat {
 class UdpMessage
 {
 public:
-    enum class Type { Unknown, SendUuid, AckUuid, Chat };
+    enum class Type { Unknown, SendUuid, AckUuid, SendPassword, AckPassword, Chat };
     UdpMessage(const QUuid &uuidToUse);                               // Send Uuid constructor
     UdpMessage(const QUuid &uuidOfSender, const QUuid &receiverUuid); // Ack Uuid constructor
-    UdpMessage(QStringView message);                                  // Chat message constructor
+    UdpMessage(bool passwordWasCorrect);                              // Ack Password constructor
+    UdpMessage(QStringView payload, Type messageType = Type::Chat);   // Chat / SendPassword message constructor
 
     /* received message constructor, will determine the type from byte array content */
     UdpMessage(QByteArrayView receivedMessage);
@@ -24,11 +25,13 @@ public:
     QUuid senderUuid() const;
     Type type() const;
     QString chatMsg() const;
+    bool accepted() const;
 
 private:
     QUuid m_payloadUuid;
     QUuid m_senderUuid;
     Type m_type{Type::Unknown};
     QString m_chatMsg;
+    bool m_accepted{false};
 };
 } // namespace dtls_pair_chat

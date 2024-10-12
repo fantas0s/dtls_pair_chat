@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Handshake.h>
+#include <PasswordVerifier.h>
 #include <UdpConnection.h>
 
 #include <QHostAddress>
@@ -13,7 +14,7 @@ class ConnectionHandler : public QObject
     Q_OBJECT
 public:
     enum class State { Idle, Connecting, Connected, Failed };
-    enum class AbortReason { Timeout, User, SecureConnectFail };
+    enum class AbortReason { Timeout, User, SecureConnectFail, PasswordMismatch };
     explicit ConnectionHandler();
 
     // Setters
@@ -43,6 +44,7 @@ private slots:
     void initialHandshakeDone(QUuid clientUuid, bool isServer);
     void secureChannelOpenError(QDtlsError error);
     void secureChannelOpened(bool isSecure);
+    void passwordVerificationDone(bool success);
     void timeoutTick();
 
 private:
@@ -65,6 +67,7 @@ private:
     QString m_errorDescription;
     QTimer m_timeoutTimer;
     std::unique_ptr<Handshake> m_handshaker;
+    std::unique_ptr<PasswordVerifier> m_passwordVerifier;
     std::shared_ptr<UdpConnection> m_udpConnection;
     int m_percentComplete{0};
 };
