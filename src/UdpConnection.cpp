@@ -56,18 +56,20 @@ void UdpConnection::readPendingMessage()
         QNetworkDatagram datagram = m_socket.receiveDatagram();
         if (datagram.senderAddress() != m_remoteAddress) {
             qWarning() << "Message from unexpected sender ignored.";
-            return;
+            continue;
         }
         switch (m_state) {
         case SecureState::Off: {
             const UdpMessage receivedMessage{datagram.data()};
             if (receivedMessage.type() == UdpMessage::Type::Unknown) {
                 qWarning() << "Message had invalid content, ignored.";
-                return;
+                // Jump to next message
+                continue;
             }
             if (receivedMessage.type() == UdpMessage::Type::Chat) {
                 qWarning() << "Unsecured chat message ignored.";
-                return;
+                // Jump to next message
+                continue;
             }
             qDebug() << "Received" << static_cast<int>(receivedMessage.type());
             emit messageReceived(receivedMessage);
@@ -77,12 +79,14 @@ void UdpConnection::readPendingMessage()
                 if (m_dtlsConnection->handshakeState() == QDtls::HandshakeState::HandshakeComplete) {
                     m_state = SecureState::On;
                     emit secureModeChanged(true);
+                    // do not return, we might have received encrypted datagrams already
                 }
                 // else keep shaking hands
             } else {
                 m_state = SecureState::Off;
                 emit dtlsError(m_dtlsConnection->dtlsError());
                 emit secureModeChanged(false);
+                // if secure mode failed, we will shut down the socket anyway, so return right away.
                 return;
             }
         } break;
@@ -92,7 +96,8 @@ void UdpConnection::readPendingMessage()
                 m_dtlsConnection->decryptDatagram(&m_socket, datagram.data())};
             if (receivedMessage.type() == UdpMessage::Type::Unknown) {
                 qWarning() << "Encrypted message had invalid content, ignored.";
-                return;
+                // Jump to next message
+                continue;
             }
             qDebug() << "Received encrypted" << static_cast<int>(receivedMessage.type());
             emit messageReceived(receivedMessage);

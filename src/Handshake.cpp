@@ -45,11 +45,11 @@ void Handshake::messageReceived(const UdpMessage &receivedMessage)
                 m_udpConnection->sendMessageToRemote(
                     UdpMessage{m_myId, receivedMessage.senderUuid()});
                 finalize(receivedMessage.senderUuid());
-                return; // do not process anything after finalize
+                break;
             case State::WaitingAckForAck:
                 // We sent ack for remote server UUID and now received ack for ack. Handshake is complete, this side is client.
                 finalize(QUuid{});
-                return; // do not process anything after finalize
+                break;
             default:
                 qWarning() << "Valid formed ack received, but in wrong phase of the handshake";
                 break;
