@@ -64,6 +64,21 @@ void ConnectionSettings::setLocalPassword(const QString &newPassword)
     emit requiredFieldsFilledChanged();
 }
 
+QString ConnectionSettings::getRemoteIp() const
+{
+    return m_connectionHandler->remoteIpAddress();
+}
+
+QString ConnectionSettings::getRemotePassword() const
+{
+    return m_connectionHandler->remotePassword();
+}
+
+QString ConnectionSettings::getLocalPassword() const
+{
+    return m_connectionHandler->localPassword();
+}
+
 QString ConnectionSettings::errorString() const
 {
     return m_connectionHandler->errorDescription();

@@ -28,6 +28,7 @@ Pane {
             errorString: qsTr("Remote IP was not valid")
             onEditingFinished: DTLSPC.ConnectionSettings.setRemoteIp(text)
             onTextChanged: errorCriteria = false
+            Component.onCompleted: text = DTLSPC.ConnectionSettings.getRemoteIp()
             Connections {
                 target: DTLSPC.ConnectionSettings
                 function onRemoteIpInvalid() {
@@ -44,6 +45,7 @@ Pane {
             Layout.preferredWidth: 320
             onEditingFinished: _localPasswordTextField.compareString = text
             onTextChanged: DTLSPC.ConnectionSettings.setRemotePassword(text)
+            Component.onCompleted: text = DTLSPC.ConnectionSettings.getRemotePassword()
         }
 
         Label {
@@ -57,6 +59,7 @@ Pane {
             errorCriteria: text.length > 0 && text === compareString
             errorString: qsTr("Passwords cannot be the same!")
             onTextChanged: DTLSPC.ConnectionSettings.setLocalPassword(text)
+            Component.onCompleted: text = DTLSPC.ConnectionSettings.getLocalPassword()
         }
 
         Button {

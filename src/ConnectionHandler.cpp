@@ -11,6 +11,24 @@ ConnectionHandler::ConnectionHandler()
     connect(&m_timeoutTimer, &QTimer::timeout, this, &ConnectionHandler::timeoutTick);
 }
 
+QString ConnectionHandler::localPassword()
+{
+    return m_localPassword;
+}
+
+QString ConnectionHandler::remoteIpAddress()
+{
+    if (m_remoteIp.isNull())
+        return {};
+    else
+        return m_remoteIp.toString();
+}
+
+QString ConnectionHandler::remotePassword()
+{
+    return m_remotePassword;
+}
+
 void ConnectionHandler::localIpAddress(const QHostAddress &address)
 {
     m_localIp = address;

@@ -3,11 +3,20 @@ import QtQuick.Controls
 import dtls_pair_chat 1.0 as DTLSPC
 
 Pane {
+    Button {
+        id: _disconnectButton
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 8
+        text: qsTr("Disconnect")
+        onClicked: _mainWindow.chatExited()
+    }
+
     ListView {
         id: _chatList
         anchors.left: parent.left
         anchors.right: _scrollBar.left
-        anchors.top: parent.top
+        anchors.top: _disconnectButton.bottom
         anchors.bottom: _editBox.top
         anchors.margins: 8
         verticalLayoutDirection: ListView.BottomToTop
@@ -20,10 +29,10 @@ Pane {
     }
     ScrollBar {
         id: _scrollBar
+        anchors.top: _chatList.top
+        anchors.bottom: _chatList.bottom
         anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: _editBox.top
-        anchors.margins: 8
+        anchors.rightMargin: 8
         enabled: _chatList.contentHeight > _chatList.height
     }
     Rectangle {

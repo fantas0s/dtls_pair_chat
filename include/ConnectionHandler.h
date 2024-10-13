@@ -14,8 +14,20 @@ class ConnectionHandler : public QObject
     Q_OBJECT
 public:
     enum class State { Idle, Connecting, Connected, Failed };
-    enum class AbortReason { Timeout, User, VersionMismatch, NoVersionFromRemote, SecureConnectFail, PasswordMismatch };
+    enum class AbortReason {
+        Timeout,
+        User,
+        VersionMismatch,
+        NoVersionFromRemote,
+        SecureConnectFail,
+        PasswordMismatch
+    };
     explicit ConnectionHandler();
+
+    // Getters
+    QString localPassword();
+    QString remoteIpAddress();
+    QString remotePassword();
 
     // Setters
     void localIpAddress(const QHostAddress &address);
@@ -42,7 +54,7 @@ signals:
     void errorDescriptionChanged();
 
 private slots:
-    void remoteVersionReceived(const QVersionNumber& version);
+    void remoteVersionReceived(const QVersionNumber &version);
     void initialHandshakeDone(QUuid clientUuid, bool isServer);
     void secureChannelOpenError(QDtlsError error);
     void secureChannelOpened(bool isSecure);

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <QAbstractItemModel>
 #include <QHostAddress>
 #include <QObject>
 #include <QQmlEngine>
-#include <QAbstractItemModel>
 
 namespace dtls_pair_chat {
 class ConnectionHandler;
@@ -21,7 +21,7 @@ class ConnectionSettings : public QObject
     Q_PROPERTY(QString progressState READ progressState NOTIFY progressChanged FINAL)
     Q_PROPERTY(bool requiredFieldsFilled READ requiredFieldsFilled NOTIFY requiredFieldsFilledChanged FINAL)
     Q_PROPERTY(QString thisMachineIpAddress READ thisMachineIpAddress NOTIFY ipAddressChanged FINAL)
-    Q_PROPERTY(QAbstractItemModel* chatModel READ chatModel NOTIFY chatModelChanged FINAL)
+    Q_PROPERTY(QAbstractItemModel *chatModel READ chatModel NOTIFY chatModelChanged FINAL)
 
 public:
     explicit ConnectionSettings(QObject *parent = nullptr);
@@ -29,10 +29,13 @@ public:
     Q_INVOKABLE void abortConnection();
     Q_INVOKABLE void createConnection();
 
-    // User input
+    // User input fields
     Q_INVOKABLE void setRemoteIp(const QString &newIp);
     Q_INVOKABLE void setRemotePassword(const QString &newPassword);
     Q_INVOKABLE void setLocalPassword(const QString &newPassword);
+    Q_INVOKABLE QString getRemoteIp() const;
+    Q_INVOKABLE QString getRemotePassword() const;
+    Q_INVOKABLE QString getLocalPassword() const;
 
     // Property getters and setters
     QString errorString() const;
@@ -41,7 +44,7 @@ public:
     QString progressState() const;
     bool requiredFieldsFilled() const;
     QString thisMachineIpAddress() const;
-    QAbstractItemModel* chatModel() const;
+    QAbstractItemModel *chatModel() const;
 
 signals:
     // property signals
