@@ -10,7 +10,7 @@ Pane {
         columns: 2
         rowSpacing: 16
         Label {
-            text: qsTr("Select your IP address to use")
+            text: qsTr("Select your IP address to use:")
         }
         ComboBox {
             model: DTLSPC.ConnectionSettings.thisMachineIpAddresses

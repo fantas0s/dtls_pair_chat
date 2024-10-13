@@ -49,6 +49,9 @@ public:
     QString chatMsg() const;
     bool accepted() const;
 
+    /* Helpful aid for logging */
+    QString typeAsString() const;
+
 private:
     static std::optional<QVersionNumber> s_supportedVersion;
     static bool versionAccepted(const std::optional<QVersionNumber> &receivedVersion);

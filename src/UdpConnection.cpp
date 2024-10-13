@@ -16,9 +16,12 @@ UdpConnection::UdpConnection(const QHostAddress &myAddress, const QHostAddress &
 
 UdpConnection::~UdpConnection()
 {
+    disconnect(&m_socket, &QUdpSocket::readyRead, this, &UdpConnection::readPendingMessage);
     if (m_dtlsConnection.get()) {
         m_dtlsConnection->shutdown(&m_socket);
     }
+    m_dtlsConnection.reset();
+    m_socket.abort();
 }
 
 void UdpConnection::sendMessageToRemote(const UdpMessage &message)
@@ -52,6 +55,8 @@ void UdpConnection::switchToSecureConnection(const QUuid &clientUuid, bool isSer
 
 void UdpConnection::readPendingMessage()
 {
+    QList<UdpMessage> receivedMessages;
+    std::optional<bool> secureMode;
     while (m_socket.hasPendingDatagrams()) {
         QNetworkDatagram datagram = m_socket.receiveDatagram();
         if (datagram.senderAddress() != m_remoteAddress) {
@@ -71,23 +76,24 @@ void UdpConnection::readPendingMessage()
                 // Jump to next message
                 continue;
             }
-            qDebug() << "Received" << static_cast<int>(receivedMessage.type());
-            emit messageReceived(receivedMessage);
+            qDebug() << "Received" << receivedMessage.typeAsString();
+            receivedMessages.append(receivedMessage);
         } break;
         case SecureState::Handshake: {
+            qDebug() << "Received DTLS handshake";
             if (m_dtlsConnection->doHandshake(&m_socket, datagram.data())) {
                 if (m_dtlsConnection->handshakeState() == QDtls::HandshakeState::HandshakeComplete) {
                     m_state = SecureState::On;
-                    emit secureModeChanged(true);
+                    secureMode = true;
                     // do not return, we might have received encrypted datagrams already
                 }
                 // else keep shaking hands
             } else {
                 m_state = SecureState::Off;
                 emit dtlsError(m_dtlsConnection->dtlsError());
-                emit secureModeChanged(false);
-                // if secure mode failed, we will shut down the socket anyway, so return right away.
-                return;
+                secureMode = false;
+                // if secure mode failed, we will shut down the socket anyway, but flush rest of the messages.
+                continue;
             }
         } break;
         default: // secure mode
@@ -99,9 +105,18 @@ void UdpConnection::readPendingMessage()
                 // Jump to next message
                 continue;
             }
-            qDebug() << "Received encrypted" << static_cast<int>(receivedMessage.type());
-            emit messageReceived(receivedMessage);
+            qDebug() << "Received encrypted" << receivedMessage.typeAsString();
+            receivedMessages.append(receivedMessage);
         } break;
         }
+    }
+    // Wait until all datagrams have been processed before emitting messages.
+    if (secureMode.has_value())
+    {
+        emit secureModeChanged(secureMode.value());
+    }
+    for (const auto& message : receivedMessages)
+    {
+        emit messageReceived(message);
     }
 }

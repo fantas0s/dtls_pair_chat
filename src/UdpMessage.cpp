@@ -196,6 +196,26 @@ bool UdpMessage::accepted() const
     return m_accepted;
 }
 
+QString UdpMessage::typeAsString() const
+{
+    switch (type()) {
+    case Type::SendUuid:
+        return QStringLiteral("SendUuid");
+    case Type::AckUuid:
+        return QStringLiteral("AckUuid");
+    case Type::SendPassword:
+        return QStringLiteral("SendPassword");
+    case Type::AckPassword:
+        return QStringLiteral("AckPassword");
+    case Type::Chat:
+        return QStringLiteral("Chat");
+    case Type::Unknown:
+        return QStringLiteral("Unknown");
+    default:
+        return QStringLiteral("Unsupported");
+    }
+}
+
 bool UdpMessage::versionAccepted(const std::optional<QVersionNumber> &receivedVersion)
 {
     return receivedVersion.has_value() && s_supportedVersion.has_value()

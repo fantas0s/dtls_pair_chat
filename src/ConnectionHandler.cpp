@@ -64,6 +64,10 @@ void ConnectionHandler::connectToRemote()
             &Handshake::complete,
             this,
             &ConnectionHandler::initialHandshakeDone);
+    connect(m_handshaker.get(),
+            &Handshake::versionNumberFromRemote,
+            this,
+            &ConnectionHandler::remoteVersionReceived);
     m_remainingSeconds = s_defaultTimeout;
     m_percentComplete = 0;
     emit progressUpdated();
