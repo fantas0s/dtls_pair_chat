@@ -13,9 +13,9 @@ HostInfo::HostInfo()
     }
 }
 
-QHostAddress HostInfo::currentAddress() const
+QList<QHostAddress> HostInfo::currentAddresses() const
 {
-    return m_currentAddress;
+    return m_currentAddresses;
 }
 
 QString HostInfo::currentError() const
@@ -31,18 +31,8 @@ void HostInfo::handleHostInfo(const QHostInfo newInfo)
         if (newInfo.addresses().empty()) {
             m_currentError = Error::NoAddress;
         } else {
-            std::optional<QHostAddress> foundAddress;
-            for (const auto &address : newInfo.addresses()) {
-                if (!foundAddress.has_value()
-                    || address.protocol() == QHostAddress::NetworkLayerProtocol::IPv6Protocol) {
-                    // No address yet or first IPv6 address
-                    foundAddress = address;
-                }
-                if (address.protocol() == QHostAddress::NetworkLayerProtocol::IPv6Protocol)
-                    break;
-            }
+            m_currentAddresses = newInfo.addresses();
             m_currentError = Error::None;
-            m_currentAddress = foundAddress.value();
         }
     } else {
         if (newInfo.error() == QHostInfo::HostInfoError::HostNotFound)
@@ -64,7 +54,7 @@ void HostInfo::handleHostInfo(const QHostInfo newInfo)
         break;
     }
     if (oldError != m_currentError || oldErrorString != m_currentErrorString)
-        emit addressChanged(m_currentAddress);
+        emit addressesChanged(m_currentAddresses);
 }
 
 void HostInfo::timerEvent(QTimerEvent *event)

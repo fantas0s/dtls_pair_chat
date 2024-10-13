@@ -10,12 +10,12 @@ Pane {
         columns: 2
         rowSpacing: 16
         Label {
-            text: DTLSPC.ConnectionSettings.isIp6 ? qsTr("Your IP (v6) address:") : qsTr("Your IP address")
+            text: qsTr("Select your IP address to use")
         }
-        TextField {
-            enabled: false
-            text: DTLSPC.ConnectionSettings.thisMachineIpAddress
+        ComboBox {
+            model: DTLSPC.ConnectionSettings.thisMachineIpAddresses
             Layout.preferredWidth: 320
+            onCurrentIndexChanged: DTLSPC.ConnectionSettings.localAddressIdx = currentIndex
         }
 
         Label {

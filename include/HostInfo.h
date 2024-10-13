@@ -9,11 +9,11 @@ class HostInfo : public QObject
     Q_OBJECT
 public:
     explicit HostInfo();
-    QHostAddress currentAddress() const;
+    QList<QHostAddress> currentAddresses() const;
     QString currentError() const;
 
 signals:
-    void addressChanged(QHostAddress newAddress);
+    void addressesChanged(const QList<QHostAddress>& newAddresses);
 
 private slots:
     void handleHostInfo(const QHostInfo newInfo);
@@ -21,7 +21,7 @@ private slots:
 private:
     void timerEvent(QTimerEvent *event) override;
     enum class Error { None, NoAddress, HostNotFound, Unknown };
-    QHostAddress m_currentAddress;
+    QList<QHostAddress> m_currentAddresses;
     HostInfo::Error m_currentError{Error::NoAddress};
     QString m_currentErrorString{tr("No network connection")};
     int m_lookUpId{-1};

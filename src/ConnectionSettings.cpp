@@ -29,10 +29,10 @@ ConnectionSettings::ConnectionSettings(QObject *parent)
             this,
             &ConnectionSettings::remoteIpInvalid);
     connect(m_hostInfo.get(),
-            &HostInfo::addressChanged,
+            &HostInfo::addressesChanged,
             this,
-            &ConnectionSettings::setThisMachineIpAddress);
-    setThisMachineIpAddress(m_hostInfo->currentAddress());
+            &ConnectionSettings::setThisMachineIpAddresses);
+    setThisMachineIpAddresses(m_hostInfo->currentAddresses());
 }
 
 void ConnectionSettings::abortConnection()
@@ -84,9 +84,22 @@ QString ConnectionSettings::errorString() const
     return m_connectionHandler->errorDescription();
 }
 
-bool ConnectionSettings::isIp6() const
+int ConnectionSettings::localAddressIdx() const
 {
-    return m_isIp6;
+    return m_localAddressIdx;
+}
+
+void ConnectionSettings::setLocalAddressIdx(int value)
+{
+    if (m_localAddressIdx != value) {
+        m_localAddressIdx = value;
+        emit localAddressIdxChanged();
+        if (m_localAddressIdx >= 0 && m_localAddressIdx < m_thisMachineIpAddresses.size()) {
+            m_connectionHandler->localIpAddress(m_thisMachineIpAddresses.at(m_localAddressIdx));
+        } else {
+            m_connectionHandler->localIpAddress({});
+        }
+    }
 }
 
 qreal ConnectionSettings::progress() const
@@ -105,9 +118,13 @@ bool ConnectionSettings::requiredFieldsFilled() const
     return m_connectionHandler->loginInfoSet();
 }
 
-QString ConnectionSettings::thisMachineIpAddress() const
+QStringList ConnectionSettings::thisMachineIpAddresses() const
 {
-    return m_thisMachineIpAddress;
+    QStringList strings;
+    for (const auto &hostAddress : m_thisMachineIpAddresses) {
+        strings.append(hostAddress.toString());
+    }
+    return strings;
 }
 
 QAbstractItemModel *ConnectionSettings::chatModel() const
@@ -115,18 +132,18 @@ QAbstractItemModel *ConnectionSettings::chatModel() const
     return m_chatModel.get();
 }
 
-void ConnectionSettings::setThisMachineIpAddress(QHostAddress newAddress)
+void ConnectionSettings::setThisMachineIpAddresses(const QList<QHostAddress> &newAddresses)
 {
+    setLocalAddressIdx(-1); // none selected
     if (m_hostInfo->currentError().isEmpty()) {
-        m_connectionHandler->localIpAddress(newAddress);
-        m_isIp6 = newAddress.protocol() == QHostAddress::NetworkLayerProtocol::IPv6Protocol;
-        m_thisMachineIpAddress = newAddress.toString();
+        m_thisMachineIpAddresses = newAddresses;
+        emit ipAddressesChanged();
+        m_connectionHandler->localIpAddress({});
         emit requiredFieldsFilledChanged();
     } else {
-        m_isIp6 = false;
-        m_thisMachineIpAddress = tr("Error: %1").arg(m_hostInfo->currentError());
+        m_thisMachineIpAddresses.clear();
+        emit ipAddressesChanged();
     }
-    emit ipAddressChanged();
 }
 
 void ConnectionSettings::connectionStateChanged()
