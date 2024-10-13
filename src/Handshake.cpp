@@ -37,6 +37,13 @@ void Handshake::messageReceived(const UdpMessage &receivedMessage)
         }
         break;
     case UdpMessage::Type::AckUuid:
+        // We always receive Ack. This is a good place to check version.
+        if (!m_remoteVersion.has_value()) {
+            m_remoteVersion = receivedMessage.msgVersion();
+            if (m_remoteVersion.has_value()) {
+                emit versionNumberFromRemote(m_remoteVersion.value());
+            }
+        }
         if (receivedMessage.payloadUuid() == m_myId) {
             // We sent UUID and received ack with our UUID
             switch (m_state) {

@@ -37,6 +37,7 @@ ConnectionSettings::ConnectionSettings(QObject *parent)
 
 void ConnectionSettings::abortConnection()
 {
+    m_chatModel->setUdpConnection({});
     m_connectionHandler->abortConnection(ConnectionHandler::AbortReason::User);
 }
 
@@ -128,7 +129,6 @@ void ConnectionSettings::connectionStateChanged()
         emit connectionFailed();
         break;
     default:
-        m_chatModel->setUdpConnection({});
         // no signal when changing to idle
         break;
     }

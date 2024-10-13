@@ -1,4 +1,5 @@
 #include <ConnectionHandler.h>
+#include <UdpMessage.h>
 
 using namespace dtls_pair_chat;
 
@@ -58,13 +59,27 @@ void ConnectionHandler::abortConnection(AbortReason reason)
     m_handshaker.reset();
     m_passwordVerifier.reset();
     m_timeoutTimer.stop();
+    m_state = State::Failed; // by default aborting means a failure.
     switch (reason) {
     case AbortReason::Timeout:
-        if (m_step == Step::OpeningSecureChannel)
-            m_errorDescription = tr("Setting up secure connection timed out.");
-        else
+        switch (m_step) {
+        case Step::SenderReceiverHandshake:
             m_errorDescription = tr("Waiting other party timed out.");
-        m_state = State::Failed;
+            break;
+        case Step::OpeningSecureChannel:
+            m_errorDescription = tr("Setting up secure connection timed out.");
+            break;
+        case Step::ExchangingPasswords:
+        default:
+            m_errorDescription = tr("Exchanging passwords timed out.");
+            break;
+        }
+        break;
+    case AbortReason::VersionMismatch:
+        m_errorDescription = tr("Local and remote versions of application are incompatible.");
+        break;
+    case AbortReason::NoVersionFromRemote:
+        m_errorDescription = tr("Remote end did not provide version.");
         break;
     case AbortReason::SecureConnectFail:
         if (m_secureChannelError == QDtlsError::NoError)
@@ -72,11 +87,9 @@ void ConnectionHandler::abortConnection(AbortReason reason)
         else
             m_errorDescription = tr("Secure connection setup failed (%1).")
                                      .arg(toString(m_secureChannelError));
-        m_state = State::Failed;
         break;
     case AbortReason::PasswordMismatch:
         m_errorDescription = tr("Password did not match in this or remote end.");
-        m_state = State::Failed;
         break;
     default: // AbortReason::User
         m_errorDescription.clear();
@@ -85,7 +98,8 @@ void ConnectionHandler::abortConnection(AbortReason reason)
     }
     m_step = Step::WaitingLoginData;
     m_secureChannelError = QDtlsError::NoError;
-    // Also remove udpConnection as we will go back to data entry
+    // Also remove udpConnection as we will go back to data entry. Lose version info.
+    UdpMessage::resetSupportedVersion();
     m_udpConnection.reset();
     // emit signals about changes
     emit stateChanged();
@@ -120,7 +134,7 @@ QString ConnectionHandler::currentStep() const
     case Step::OpeningSecureChannel:
         return tr("Opening secure channel (%n second(s) until timeout)...", "", m_remainingSeconds);
     case Step::ExchangingPasswords:
-        return tr("Verifying passwords...");
+        return tr("Verifying passwords (%n second(s) until timeout)...", "", m_remainingSeconds);
     default:
         qWarning() << "Unhandled step!";
         return tr("Waiting...");
@@ -137,31 +151,47 @@ std::shared_ptr<UdpConnection> ConnectionHandler::udpConnection() const
     return m_udpConnection;
 }
 
+void ConnectionHandler::remoteVersionReceived(const QVersionNumber &version)
+{
+    const auto localVersion = UdpMessage::localVersion();
+    if (version.majorVersion() != localVersion.majorVersion())
+        abortConnection(AbortReason::VersionMismatch);
+    else if (version.minorVersion() < localVersion.minorVersion())
+        UdpMessage::setSupportedVersion(version);
+    else
+        UdpMessage::setSupportedVersion(UdpMessage::localVersion());
+}
+
 void ConnectionHandler::initialHandshakeDone(QUuid clientUuid, bool isServer)
 {
-    // delete connection object. That will also close connection.
-    m_handshaker.reset();
-    m_step = Step::OpeningSecureChannel;
-    m_percentComplete = 34; // initial handshake reaches 33%
-    m_remainingSeconds = s_defaultTimeout;
-    emit progressUpdated();
+    if (UdpMessage::supportedVersion().has_value()) {
+        // delete connection object. That will also close connection.
+        m_handshaker.reset();
+        m_step = Step::OpeningSecureChannel;
+        m_percentComplete = 34; // initial handshake reaches 33%
+        m_remainingSeconds = s_defaultTimeout;
+        emit progressUpdated();
 
-    /* Create password verifier already as password from remote could be
+        /* Create password verifier already as password from remote could be
      * sent immediately after secure mode is enabled.
      * Then switch to secure connection.
      */
-    m_passwordVerifier = std::make_unique<PasswordVerifier>(m_udpConnection,
-                                                            m_localPassword,
-                                                            m_remotePassword);
-    connect(m_udpConnection.get(),
-            &UdpConnection::secureModeChanged,
-            this,
-            &ConnectionHandler::secureChannelOpened);
-    connect(m_udpConnection.get(),
-            &UdpConnection::dtlsError,
-            this,
-            &ConnectionHandler::secureChannelOpenError);
-    m_udpConnection->switchToSecureConnection(clientUuid, isServer);
+        m_passwordVerifier = std::make_unique<PasswordVerifier>(m_udpConnection,
+                                                                m_localPassword,
+                                                                m_remotePassword);
+        connect(m_udpConnection.get(),
+                &UdpConnection::secureModeChanged,
+                this,
+                &ConnectionHandler::secureChannelOpened);
+        connect(m_udpConnection.get(),
+                &UdpConnection::dtlsError,
+                this,
+                &ConnectionHandler::secureChannelOpenError);
+        m_udpConnection->switchToSecureConnection(clientUuid, isServer);
+    } else {
+        // if no supported version set, abort
+        abortConnection(AbortReason::NoVersionFromRemote);
+    }
 }
 
 void ConnectionHandler::secureChannelOpenError(QDtlsError error)
