@@ -2,8 +2,9 @@
 
 #include <QDtls>
 #include <QObject>
-#include <QUdpSocket>
 #include <QUuid>
+
+class QUdpSocket;
 
 namespace dtls_pair_chat {
 class UdpMessage;
@@ -28,7 +29,7 @@ private slots:
 private:
     enum class SecureState { Off, Handshake, On };
     static constexpr quint16 s_chatPort{49152};
-    QUdpSocket m_socket;
+    QUdpSocket* m_socket;
     QHostAddress m_myAddress;
     QHostAddress m_remoteAddress;
     SecureState m_state{SecureState::Off};
