@@ -28,6 +28,7 @@ public:
     // Control
     Q_INVOKABLE void abortConnection();
     Q_INVOKABLE void createConnection();
+    Q_INVOKABLE void copyToClipboard(const QString &text);
 
     // User input fields
     Q_INVOKABLE void setRemoteIp(const QString &newIp);
@@ -65,7 +66,7 @@ signals:
     void remoteIpInvalid();
 
 private slots:
-    void setThisMachineIpAddresses(const QList<QHostAddress>& newAddresses);
+    void setThisMachineIpAddresses(const QList<QHostAddress> &newAddresses);
     void connectionStateChanged();
 
 private:

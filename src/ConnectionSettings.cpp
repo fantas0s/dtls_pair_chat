@@ -4,6 +4,9 @@
 #include <ConnectionHandler.h>
 #include <HostInfo.h>
 
+#include <QClipboard>
+#include <QGuiApplication>
+
 using namespace dtls_pair_chat;
 
 ConnectionSettings::ConnectionSettings(QObject *parent)
@@ -44,6 +47,11 @@ void ConnectionSettings::abortConnection()
 void ConnectionSettings::createConnection()
 {
     m_connectionHandler->connectToRemote();
+}
+
+void ConnectionSettings::copyToClipboard(const QString &text)
+{
+    QGuiApplication::clipboard()->setText(text);
 }
 
 void ConnectionSettings::setRemoteIp(const QString &newIp)

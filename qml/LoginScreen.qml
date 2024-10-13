@@ -12,10 +12,25 @@ Pane {
         Label {
             text: qsTr("Select your IP address to use:")
         }
-        ComboBox {
-            model: DTLSPC.ConnectionSettings.thisMachineIpAddresses
-            Layout.preferredWidth: 320
-            onCurrentIndexChanged: DTLSPC.ConnectionSettings.localAddressIdx = currentIndex
+        Item {
+            implicitHeight: Math.max(_ipAddressSelect.implicitHeight, _copyButton.implicitHeight)
+            Layout.preferredWidth: 320 + _copyButton.implicitWidth
+            ComboBox {
+                id: _ipAddressSelect
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                anchors.right: _copyButton.left
+                anchors.rightMargin: 4
+                model: DTLSPC.ConnectionSettings.thisMachineIpAddresses
+                onCurrentIndexChanged: DTLSPC.ConnectionSettings.localAddressIdx = currentIndex
+            }
+            Button {
+                id: _copyButton
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Copy")
+                onClicked: DTLSPC.ConnectionSettings.copyToClipboard(_ipAddressSelect.currentText)
+            }
         }
 
         Label {
